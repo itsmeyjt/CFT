@@ -44,16 +44,16 @@ class CustomTrainer(Trainer):
         values = list(inputs["input_ids"])
         maxlen = 0
         for i in range(x):
-            id = torch.nonzero(torch.eq(values[i], 151643))[-2] + 1
+            id = torch.nonzero(torch.eq(values[i], self.model.config.eos_token_id))[-2] + 1
             l1= len(values[i][:id])
             maxlen = max(maxlen,l1)
             
         for i in range(x):
-            id = torch.nonzero(torch.eq(values[i], 151643))[-2] + 1
+            id = torch.nonzero(torch.eq(values[i], self.model.config.eos_token_id))[-2] + 1
             l1,l2 = len(values[i][:id]),len(values[i][id:])
             for k,v in inputs.items():
                 if k == "input_ids":
-                    pad = 151643
+                    pad = self.model.config.eos_token_id
                 elif k == "labels":
                     pad = -100
                 else:
@@ -85,13 +85,13 @@ class CustomTrainer(Trainer):
         shift_logits = shift_logits_0 - shift_logits_1
         loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
         with torch.no_grad():
-            beta = 3.6
+            beta = 0.25
             _flag = shift_labels > -100
             flag = _flag.float().to(shift_labels.device)
             flag_sum = torch.sum(flag,dim=-1).reshape(-1,1)
-            _gap = 1 / (beta*flag_sum)
+            _gap = (1-beta) / (flag_sum-1)
             _pos = torch.cumsum(flag,dim=-1)
-            weight = 1 - _pos * _gap
+            weight = 1 - (_pos-1) * _gap
             weight = torch.where(_flag,weight,torch.zeros_like(weight))
             weight = weight.view(-1)
         shift_labels = shift_labels.view(-1)

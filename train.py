@@ -328,7 +328,7 @@ def train(
         data_collator=transformers.DataCollatorForSeq2Seq(
             tokenizer, pad_to_multiple_of=8, return_tensors="pt", padding=True
         ),
-        callbacks = [EarlyStoppingCallback(early_stopping_patience=3)],
+        callbacks = [EarlyStoppingCallback(early_stopping_patience=1)],
         # optimizers=(optimizer, lr_scheduler) 
     )
     model.config.use_cache = False

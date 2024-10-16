@@ -11,7 +11,7 @@ do
                 CUDA_VISIBLE_DEVICES=7 accelerate launch train.py \
                     --base_model "YOUR_MODEL_NAME" \
                     --train_data_path "[\"YOUR_TRAIN_DATA_PATH\"]"  \
-                    --val_data_path "[\"YOUR_TRAIN_DATA_PATH\"]"  \
+                    --val_data_path "[\"YOUR_VAL_DATA_PATH\"]"  \
                     --output_dir YOUR_SAVE_PATH\
                     --batch_size 64 \
                     --micro_batch_size 16\

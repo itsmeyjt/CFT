@@ -15,6 +15,7 @@ bash run.sh
 bash infer.sh
 
 ```
+You should use your own model and data path.
 
 # Evaluate 
 
@@ -26,6 +27,11 @@ python evaluate_acc.py
 The adjusted grounding method:
 ```
 python eval_acc_2.py
+```
+
+To get the distribution of item popularity, you can run the following code:
+```
+python eval.py
 ```
 
 If you're using this code in your research or applications, please cite our paper using this BibTeX:

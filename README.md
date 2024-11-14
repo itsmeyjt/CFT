@@ -16,6 +16,18 @@ bash infer.sh
 
 ```
 
+# Evaluate 
+
+The original grounding method(BIGRec):
+```
+python evaluate_acc.py
+```
+
+The adjusted grounding method:
+```
+python eval_acc_2.py
+```
+
 If you're using this code in your research or applications, please cite our paper using this BibTeX:
 ```bibtex
 @article{zhang2024causality,

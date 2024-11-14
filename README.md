@@ -31,7 +31,7 @@ python eval_acc_2.py
 
 To get the distribution of item popularity, you can run the following code:
 ```
-python eval.py
+python evaluate_all_pop.py
 ```
 
 If you're using this code in your research or applications, please cite our paper using this BibTeX:

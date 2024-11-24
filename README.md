@@ -29,8 +29,4 @@ To get the distribution of item popularity, you can run the following code:
 python evaluate_all_pop.py
 ```
 
-  journal={arXiv preprint arXiv:2410.22809},
-  year={2024}
-}
-```
 

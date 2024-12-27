@@ -1,10 +1,10 @@
-path=Your_Result_Path
-result_path=/NAS/yjt/CFT/model/books/Song1_0_-1_qwen_64_16_lr_1e-4_0.01_0.2_weighting=True__add_loss_diff=True/pop_count_without_his.json
-base_model=/NAS/yjt/CFT/model/books/Song1_0_-1_qwen_64_16_lr_1e-4_0.01_0.2_weighting=True__add_loss_diff=True/checkpoint-10672
-embed_path=/NAS/yjt/CFT/model/books/Song1_0_-1_qwen_64_16_lr_1e-4_0.01_0.2_weighting=True__add_loss_diff=True/embedding4.pt
-info_path=/NAS/yjt/CFT/data/books/info.txt
-test_csv_path=/NAS/yjt/CFT/data/books/test.csv
-pop_count_path=/NAS/yjt/CFT/data/books/books_pop_count_5.csv
+path=YOUR_EVAL_PATH
+result_path=YOUR_RESULT_PATH
+base_model=YOUR_MODEL_PATH
+embed_path=YOUR_EMBED_PATH
+info_path=YOUR_INFO_PATH
+test_csv_path=TEST_CSV_PATH
+pop_count_path=POP_COUNT_PATH
 
 CUDA_VISIBLE_DEVICES=0 python evaluate_all_pop.py \
     --path ${path} \

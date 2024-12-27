@@ -10,7 +10,7 @@ import argparse
 
 from peft import PeftModel
 
-def calc(path,result_path,base_model,embed_path):
+def calc(path,result_path,base_model,embed_path,info_path):
     path = [path]
     tokenizer = AutoTokenizer.from_pretrained(base_model)
     tokenizer.pad_token = tokenizer.eos_token
@@ -23,7 +23,7 @@ def calc(path,result_path,base_model,embed_path):
 
 
     model.eval()
-    f = open('YOUR_INFO_PATH', 'r')
+    f = open(info_path, 'r')
     items = f.readlines()
     item_names = [_.split('\t')[0].strip("\"\n").strip(" ") for _ in items]
     item_ids = [_ for _ in range(len(item_names))]
@@ -53,19 +53,20 @@ def calc(path,result_path,base_model,embed_path):
             chunk_size = (len(list) - 1) // batch_size + 1
             for i in range(chunk_size):
                 yield list[batch_size * i: batch_size * (i + 1)]
-        text = [[_["predict"][k].strip().strip("\"").strip() for _ in test_data] for k in range(5)]
+        NUM_BEAMS = len(test_data[0]["predict"])
+        text = [[_["predict"][k].strip().strip("\"").strip() for _ in test_data] for k in range(NUM_BEAMS)]
         tokenizer.padding_side = "left"
         from tqdm import tqdm
         game_embedding = torch.load(embed_path)
-        for k in range(5):
+        rank_list = []
+        for k in range(NUM_BEAMS):
             predict_embeddings = []
-            for i, batch_input in tqdm(enumerate(batch(text[k], 32))):
+            for i, batch_input in tqdm(enumerate(batch(text[k], 16))):
                 input = tokenizer(batch_input, return_tensors="pt", padding=True)
                 input_ids = input.input_ids.long().to("cuda:0")
                 attention_mask = input.attention_mask.long().to("cuda:0")
                 outputs = model(input_ids, attention_mask=attention_mask, output_hidden_states=True)
                 hidden_states = outputs.hidden_states
-                # print(hidden_states[-1].size())
                 predict_embeddings.append(hidden_states[-1][:, -1, :].detach().cpu())
             
             predict_embeddings = torch.cat(predict_embeddings, dim=0)     
@@ -73,30 +74,38 @@ def calc(path,result_path,base_model,embed_path):
 
             rank = dist
             rank = rank.argsort(dim = -1)
-            most,next = rank[:,0].unsqueeze(-1),rank[:,1].unsqueeze(-1)
-            if k == 0:
-                res0 = most
-                res1 = next
-            else:
-                res0 = torch.cat([res0,most],dim=-1)
-                res1 = torch.cat([res1,next],dim=-1)
-                # .argsort(dim = -1)
-        topk_list = [1, 3, 5, 10]
+            rank_list.append(rank)
+        
+        dataset_size = rank_list[0].shape[0]
+        num_beams = len(rank_list)
+        num_items = rank_list[0].shape[1]
+        # (num_beams, dataset_size, num_items) -> (dataset_size, num_items, num_beams)
+        rank_list = torch.cat(rank_list, dim=-1).reshape(dataset_size, num_beams, num_items).transpose(1, 2).reshape(dataset_size, num_items * num_beams)
+        rank_list = rank_list[:, :500].clone()
+
+        topk_list = [1, 3, 5, 10, 20, 50]
         NDCG = []
         HR = []
-        for topk in topk_list:
+        for topk in tqdm(topk_list):
             S = 0
             SS = 0
             LL = len(test_data)
-            for i in range(len(test_data)):
+            for i in range(rank_list.shape[0]):
                 target_item = test_data[i]['output'].strip("\"").strip(" ")
-                rec_list = res0[i].tolist() + res1[i].tolist()
+                rec_list = rank_list[i].tolist()
+                rec_list = pd.Series(rec_list).drop_duplicates(keep='first').tolist()
+                assert len(rec_list) >= 50
                 rec_list = rec_list[:topk]
+                flag = False
                 for k in range(len(rec_list)):
                     for target_item_id in item_dict[target_item]:
                         if rec_list[k] == target_item_id:
                             S = S + (1 / math.log(k + 2))
                             SS = SS + 1
+                            flag = True
+                            break
+                    if flag:
+                        break
             NDCG.append(S / LL / (1.0 / math.log(2)))
             HR.append(SS / LL) 
 
